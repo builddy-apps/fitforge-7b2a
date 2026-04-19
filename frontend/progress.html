@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitForge - Progress</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="app.js"></script>
+  <script src="auth-client.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+    .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 pb-20 lg:pb-0">
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">FitForge</span>
+      </div>
+      <nav class="hidden sm:flex items-center gap-1">
+        <a href="index.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Home</a>
+        <a href="exercises.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Exercises</a>
+        <a href="routines.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Build</a>
+        <a href="calendar.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Calendar</a>
+        <a href="records.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Profile</a>
+        <a href="progress.html" class="px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-lg transition-colors">Progress</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button id="darkModeToggle" type="button" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-primary-500">
+          <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="moonIcon" class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button id="logoutBtn" class="hidden sm:block px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-2xl font-bold">Progress Tracking</h1>
+      <select id="exerciseSelect" class="w-full sm:w-64 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+        <option value="">Select an exercise...</option>
+      </select>
+    </div>
+
+    <div id="loadingState" class="space-y-6">
+      <div class="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="grid grid-cols-3 gap-4"><div class="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div><div class="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div><div class="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div></div>
+    </div>
+
+    <div id="noExerciseState" class="hidden py-16 text-center animate-fade-in">
+      <svg class="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-1">Select an exercise</h3>
+      <p class="text-slate-500 dark:text-slate-400">Choose an exercise to view your progress charts and stats</p>
+    </div>
+
+    <div id="exerciseContent" class="hidden space-y-6 animate-fade-in">
+      <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Progress Charts</h2>
+          <div class="flex gap-2">
+            <button data-chart="weight" class="chart-tab px-3 py-1 text-sm font-medium rounded-lg transition-colors bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400">Weight</button>
+            <button data-chart="reps" class="chart-tab px-3 py-1 text-sm font-medium rounded-lg transition-colors text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Reps</button>
+            <button data-chart="volume" class="chart-tab px-3 py-1 text-sm font-medium rounded-lg transition-colors text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Volume</button>
+          </div>
+        </div>
+        <div class="p-6"><canvas id="progressChart" class="w-full" height="300"></canvas></div>
+      </section>
+
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+          <div class="flex items-center gap-3 mb-2"><div class="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30"><svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div><span class="text-sm text-slate-500 dark:text-slate-400">Max Weight</span></div>
+          <p id="maxWeight" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+          <div class="flex items-center gap-3 mb-2"><div class="p-2 rounded-lg bg-accent-100 dark:bg-accent-900/30"><svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div><span class="text-sm text-slate-500 dark:text-slate-400">Max Reps</span></div>
+          <p id="maxReps" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+          <div class="flex items-center gap-3 mb-2"><div class="p-2 rounded-lg bg-green-100 dark:bg-green-900/30"><svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><span class="text-sm text-slate-500 dark:text-slate-400">Total Volume</span></div>
+          <p id="totalVolume" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+        </div>
+      </section>
+
+      <section id="prSection" class="hidden">
+        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800 p-5">
+          <div class="flex items-start gap-4">
+            <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30"><svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            <div class="flex-1"><h3 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">Personal Records</h3><div id="prList" class="space-y-1"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800"><h2 class="text-lg font-semibold">Workout History</h2></div>
+        <div id="workoutHistory" class="divide-y divide-slate-100 dark:divide-slate-800"></div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let currentExercise = null, currentChartType = 'weight';
+    async function loadExercises() {
+      try { const res = await App.api.get('/api/exercises'); const select = document.getElementById('exerciseSelect'); res.data.forEach(ex => { const opt = document.createElement('option'); opt.value = ex.id; opt.textContent = ex.name; select.appendChild(opt); }); } catch (e) { App.toast.error('Failed to load exercises'); }
+    }
+    async function loadExerciseProgress(id) {
+      document.getElementById('loadingState').classList.remove('hidden'); document.getElementById('noExerciseState').classList.add('hidden'); document.getElementById('exerciseContent').classList.add('hidden');
+      try { const res = await App.api.get(`/api/progress/exercise/${id}`); currentExercise = res.data; renderCharts(); renderStats(); renderPRs(); renderHistory(); document.getElementById('loadingState').classList.add('hidden'); document.getElementById('exerciseContent').classList.remove('hidden'); } catch (e) { App.toast.error('Failed to load progress'); document.getElementById('loadingState').classList.add('hidden'); }
+    }
+    function renderCharts() {
+      const canvas = document.getElementById('progressChart'), ctx = canvas.getContext('2d'), rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width - 48; canvas.height = 300;
+      const sets = currentExercise.sets || []; if (sets.length < 2) { ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Not enough data to display chart', canvas.width / 2, canvas.height / 2); return; }
+      const isDark = document.documentElement.classList.contains('dark'), colors = { line: isDark ? '#38bdf8' : '#0284c7', grid: isDark ? '#334155' : '#e2e8f0', text: isDark ? '#94a3b8' : '#64748b' };
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const values = sets.map(s => currentChartType === 'volume' ? s.volume : (currentChartType === 'reps' ? s.reps : s.weight)), maxVal = Math.max(...values) * 1.1 || 100, minVal = Math.min(...values) * 0.9 || 0, padding = { top: 20, right: 20, bottom: 40, left: 50 }, chartWidth = canvas.width - padding.left - padding.right, chartHeight = canvas.height - padding.top - padding.bottom;
+      ctx.strokeStyle = colors.grid; ctx.lineWidth = 1; for (let i = 0; i <= 5; i++) { const y = padding.top + (chartHeight / 5) * i; ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(canvas.width - padding.right, y); ctx.stroke(); ctx.fillStyle = colors.text; ctx.font = '12px sans-serif'; ctx.textAlign = 'right'; ctx.fillText((maxVal - ((maxVal - minVal) / 5) * i).toFixed(0), padding.left - 10, y + 4); }
+      if (sets.length > 0) {
+        const stepX = chartWidth / (sets.length - 1); ctx.strokeStyle = colors.line; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+        sets.forEach((s, i) => { const val = currentChartType === 'volume' ? s.volume : (currentChartType === 'reps' ? s.reps : s.weight), x = padding.left + stepX * i, y = padding.top + chartHeight - ((val - minVal) / (maxVal - minVal)) * chartHeight; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke();
+        ctx.fillStyle = colors.line; sets.forEach((s, i) => { const val = currentChartType === 'volume' ? s.volume : (currentChartType === 'reps' ? s.reps : s.weight), x = padding.left + stepX * i, y = padding.top + chartHeight - ((val - minVal) / (maxVal - minVal)) * chartHeight; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = colors.text; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`${new Date(s.date).getMonth() + 1}/${new Date(s.date).getDate()}`, x, canvas.height - 10); });
+      }
+    }
+    function renderStats() {
+      const sets = currentExercise.sets || []; const maxWeight = sets.length ? Math.max(...sets.map(s => s.weight)) : '-', maxReps = sets.length ? Math.max(...sets.map(s => s.reps)) : '-', totalVolume = sets.reduce((sum, s) => sum + (s.volume || 0), 0);
+      document.getElementById('maxWeight').textContent = maxWeight === '-' ? '-' : `${maxWeight} lbs`; document.getElementById('maxReps').textContent = maxReps === '-' ? '-' : maxReps; document.getElementById('totalVolume').textContent = `${totalVolume.toLocaleString()} lbs`;
+    }
+    function renderPRs() {
+      const prSection = document.getElementById('prSection'), prList = document.getElementById('prList'), records = currentExercise.records || {}; const types = Object.keys(records);
+      if (types.length === 0) { prSection.classList.add('hidden'); return; } prSection.classList.remove('hidden');
+      prList.innerHTML = types.map(type => `<div class="flex items-center justify-between text-sm"><span class="text-yellow-700 dark:text-yellow-300 capitalize">${type}</span><span class="font-semibold text-yellow-800 dark:text-yellow-200">${records[type].value} lbs <span class="text-xs opacity-75">(${App.utils.formatDate(records[type].date)})</span></span></div>`).join('');
+    }
+    function renderHistory() {
+      const historyEl = document.getElementById('workoutHistory'), sets = currentExercise.sets || [];
+      if (sets.length === 0) { historyEl.innerHTML = '<div class="p-6 text-center text-slate-500 dark:text-slate-400">No workout history yet</div>'; return; }
+      const grouped = {}; sets.forEach(s => { if (!grouped[s.date]) grouped[s.date] = []; grouped[s.date].push(s); });
+      historyEl.innerHTML = Object.entries(grouped).reverse().map(([date, daySets]) => `<div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"><div class="flex items-center justify-between mb-2"><span class="font-medium text-slate-900 dark:text-white">${App.utils.formatDate(date)}</span><span class="text-sm text-slate-500 dark:text-slate-400">${daySets.length} sets</span></div><div class="flex flex-wrap gap-2">${daySets.slice(0, 5).map(s => `<span class="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">${s.weight} × ${s.reps}</span>`).join('')}${daySets.length > 5 ? `<span class="px-2 py-1 text-xs text-slate-500">+${daySets.length - 5} more</span>` : ''}</div></div>`).join('');
+    }
+    document.getElementById('exerciseSelect').addEventListener('change', e => { if (e.target.value) loadExerciseProgress(e.target.value); else { document.getElementById('noExerciseState').classList.remove('hidden'); document.getElementById('exerciseContent').classList.add('hidden'); } });
+    document.querySelectorAll('.chart-tab').forEach(btn => { btn.addEventListener('click', e => { document.querySelectorAll('.chart-tab').forEach(b => { b.classList.remove('bg-primary-100', 'dark:bg-primary-900', 'text-primary-600', 'dark:text-primary-400'); b.classList.add('text-slate-500'); }); e.target.classList.add('bg-primary-100', 'dark:bg-primary-900', 'text-primary-600', 'dark:text-primary-400'); e.target.classList.remove('text-slate-500'); currentChartType = e.target.dataset.chart; renderCharts(); }); });
+    document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+    window.addEventListener('resize', () => { if (currentExercise) renderCharts(); });
+    Auth.checkAuth(); loadExercises();
+  </script>
+</body>
+</html>

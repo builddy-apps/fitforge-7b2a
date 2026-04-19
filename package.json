@@ -1,0 +1,16 @@
+{
+  "name": "fitforge",
+  "version": "1.0.0",
+  "description": "A comprehensive workout tracker with exercise library, custom routine builder, active workout mode with rest timer, and progress analytics",
+  "type": "module",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "better-sqlite3": "^11.6.0",
+    "cors": "^2.8.5"
+  }
+}

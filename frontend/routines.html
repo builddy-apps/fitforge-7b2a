@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitForge - Build Routines</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+    .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+    .drag-over { border: 2px dashed #0ea5e9 !important; background-color: rgba(14, 165, 233, 0.1) !important; }
+    .dragging { opacity: 0.5; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 pb-20 lg:pb-0">
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">FitForge</span>
+      </div>
+      
+      <nav class="hidden sm:flex items-center gap-1">
+        <a href="index.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Home</a>
+        <a href="exercises.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Exercises</a>
+        <a href="routines.html" class="px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-lg transition-colors">Build</a>
+        <a href="calendar.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Calendar</a>
+        <a href="records.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Profile</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button id="darkModeToggle" type="button" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-primary-500">
+          <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="moonIcon" class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button id="logoutBtn" class="hidden sm:block px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-2xl font-bold">My Routines</h1>
+      <button id="createRoutineBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Create Routine
+      </button>
+    </div>
+
+    <div id="loadingState" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="h-40 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="h-40 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="h-40 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+    </div>
+
+    <div id="emptyState" class="hidden py-16 text-center">
+      <svg class="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-1">No routines yet</h3>
+      <p class="text-slate-500 dark:text-slate-400 mb-4">Build your first custom workout routine</p>
+      <button onclick="document.getElementById('createRoutineBtn').click()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">Create Routine</button>
+    </div>
+
+    <div id="routinesGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    </div>
+  </main>
+
+  <!-- Builder Modal -->
+  <div id="builderModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="builderModalOverlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[90vh] bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h2 id="modalTitle" class="text-xl font-bold">Create Routine</h2>
+        <button id="closeModalBtn" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Routine Name</label>
+          <input type="text" id="routineNameInput" class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all" placeholder="e.g., Push Day, Leg Crusher">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Add Exercise</label>
+          <div class="flex gap-2">
+            <select id="exerciseSelect" class="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+              <option value="">Select an exercise...</option>
+            </select>
+            <button id="addExerciseBtn" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors border border-slate-300 dark:border-slate-700">Add</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-medium text-slate-700 dark:text-slate-300">Exercises</h3>
+            <span class="text-xs text-slate-500">Drag to reorder</span>
+          </div>
+          <div id="exercisesList" class="space-y-3 min-h-[100px] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg p-2">
+            <div id="emptyBuilderState" class="text-center py-8 text-slate-400 text-sm">No exercises added yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50 dark:bg-slate-900/50">
+        <button id="cancelModalBtn" class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition-colors">Cancel</button>
+        <button id="saveRoutineBtn" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95">Save Routine</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="deleteModalOverlay"></div>
+    <div class="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-sm w-full p-6 animate-scale-in">
+      <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </div>
+      <h3 class="text-lg font-bold text-center text-slate-900 dark:text-white mb-2">Delete Routine?</h3>
+      <p class="text-center text-slate-500 dark:text-slate-400 mb-6">This action cannot be undone.</p>
+      <div class="flex gap-3">
+        <button id="cancelDeleteBtn" class="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors">Cancel</button>
+        <button id="confirmDeleteBtn" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth-client.js"></script>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      Auth.checkAuth();
+      
+      const state = {
+        routines: [],
+        exercises: [],
+        builderExercises: [],
+        editingId: null,
+        deletingId: null,
+        draggedIndex: null
+      };
+
+      const els = {
+        grid: document.getElementById('routinesGrid'),
+        loading: document.getElementById('loadingState'),
+        empty: document.getElementById('emptyState'),
+        builderModal: document.getElementById('builderModal'),
+        deleteModal: document.getElementById('deleteModal'),
+        routineName: document.getElementById('routineNameInput'),
+        exerciseSelect: document.getElementById('exerciseSelect'),
+        exercisesList: document.getElementById('exercisesList'),
+        emptyBuilder: document.getElementById('emptyBuilderState')
+      };
+
+      async function init() {
+        try {
+          const [routinesRes, exercisesRes] = await Promise.all([
+            App.api.get('/api/routines'),
+            App.api.get('/api/exercises')
+          ]);
+          state.routines = routinesRes.data;
+          state.exercises = exercisesRes.data;
+          populateExerciseSelect();
+          renderRoutines();
+        } catch (err) {
+          App.toast.error('Failed to load data');
+        } finally {
+          els.loading.classList.add('hidden');
+        }
+      }
+
+      function populateExerciseSelect() {
+        els.exerciseSelect.innerHTML = '<option value="">Select an exercise...</option>';
+        state.exercises.forEach(ex => {
+          const opt = document.createElement('option');
+          opt.value = ex.id;
+          opt.textContent = `${ex.name} (${ex.muscle_group})`;
+          els.exerciseSelect.appendChild(opt);
+        });
+      }
+
+      function renderRoutines() {
+        if (state.routines.length === 0) {
+          els.grid.classList.add('hidden');
+          els.empty.classList.remove('hidden');
+          return;
+        }
+
+        els.empty.classList.add('hidden');
+        els.grid.classList.remove('hidden');
+        els.grid.innerHTML = state.routines.map((r, i) => `
+          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all animate-fade-in p-5 flex flex-col h-full" style="animation-delay: ${i * 50}ms">
+            <div class="flex items-start justify-between mb-3">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white line-clamp-1">${escapeHtml(r.name)}</h3>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              <span>${r.exercise_count} exercises</span>
+            </div>
+            <div class="mt-auto flex gap-2">
+              <button data-action="edit" data-id="${r.id}" class="flex-1 px-3 py-2 bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-950 font-medium rounded-lg transition-colors text-sm">Edit</button>
+              <button data-action="delete" data-id="${r.id}" class="px-3 py-2 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950 font-medium rounded-lg transition-colors text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        els.grid.querySelectorAll('[data-action]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            if (btn.dataset.action === 'edit') openBuilder(id);
+            if (btn.dataset.action === 'delete') openDeleteModal(id);
+          });
+        });
+      }
+
+      async function openBuilder(id = null) {
+        state.editingId = id;
+        state.builderExercises = [];
+        
+        if (id) {
+          try {
+            const res = await App.api.get(`/api/routines/${id}`);
+            state.builderExercises = res.data.exercises.map(e => ({
+              exercise_id: e.exercise_id,
+              name: e.name,
+              sets: e.sets || 3,
+              reps: e.reps || 10,
+              rest_seconds: e.rest_seconds || 60
+            }));
+            els.routineName.value = res.data.name;
+            document.getElementById('modalTitle').textContent = 'Edit Routine';
+          } catch (err) {
+            App.toast.error('Failed to load routine');
+            return;
+          }
+        } else {
+          els.routineName.value = '';
+          document.getElementById('modalTitle').textContent = 'Create Routine';
+        }
+        
+        renderBuilderExercises();
+        els.builderModal.classList.remove('hidden');
+      }
+
+      function renderBuilderExercises() {
+        if (state.builderExercises.length === 0) {
+          els.emptyBuilder.classList.remove('hidden');
+          els.exercisesList.innerHTML = '';
+          els.exercisesList.appendChild(els.emptyBuilder);
+          return;
+        }
+        els.emptyBuilder.classList.add('hidden');
+        
+        els.exercisesList.innerHTML = state.builderExercises.map((item, index) => `
+          <div class="group bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 transition-all hover:shadow-sm cursor-move" draggable="true" data-index="${index}">
+            <div class="flex items-center gap-3">
+              <div class="cursor-grab text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+              </div>
+              <div class="flex-1 font-medium text-slate-900 dark:text-white text-sm">${escapeHtml(item.name)}</div>
+              <button data-remove="${index}" class="p-1 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <div class="flex-1">
+                <label class="block text-xs text-slate-500 mb-1">Sets</label>
+                <input type="number" min="1" max="20" data-field="sets" data-index="${index}" value="${item.sets}" class="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent">
+              </div>
+              <div class="flex-1">
+                <label class="block text-xs text-slate-500 mb-1">Reps</label>
+                <input type="number" min="1" max="100" data-field="reps" data-index="${index}" value="${item.reps}" class="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent">
+              </div>
+              <div class="flex-1">
+                <label class="block text-xs text-slate-500 mb-1">Rest (s)</label>
+                <input type="number" min="0" max="600" data-field="rest" data-index="${index}" value="${item.rest_seconds}" class="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-primary-500 focus:border-transparent">
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        setupDragDrop();
+        setupBuilderInputs();
+      }
+
+      function setupBuilderInputs() {
+        els.exercisesList.querySelectorAll('input').forEach(input => {
+          input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            const field = e.target.dataset.field;
+            const val = parseInt(e.target.value);
+            if (field === 'rest') state.builderExercises[idx].rest_seconds = val;
+            else state.builderExercises[idx][field] = val;
+          });
+        });
+
+        els.exercisesList.querySelectorAll('[data-remove]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.remove);
+            state.builderExercises.splice(idx, 1);
+            renderBuilderExercises();
+          });
+        });
+      }
+
+      function setupDragDrop() {
+        const items = els.exercisesList.querySelectorAll('[draggable]');
+        
+        items.forEach(item => {
+          item.addEventListener('dragstart', (e) => {
+            state.draggedIndex = parseInt(item.dataset.index);
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+          });
+
+          item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drag-over'));
+            state.draggedIndex = null;
+          });
+
+          item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (parseInt(item.dataset.index) === state.draggedIndex) return;
+            item.classList.add('drag-over');
+          });
+
+          item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+          });
+
+          item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const targetIndex = parseInt(item.dataset.index);
+            if (state.draggedIndex === null || state.draggedIndex === targetIndex) return;
+
+            const [removed] = state.builderExercises.splice(state.draggedIndex, 1);
+            state.builderExercises.splice(targetIndex, 0, removed);
+            renderBuilderExercises();
+          });
+        });
+      }
+
+      function closeBuilder() {
+        els.builderModal.classList.add('hidden');
+        state.editingId = null;
+        state.builderExercises = [];
+      }
+
+      async function saveRoutine() {
+        const name = els.routineName.value.trim();
+        if (!name) return App.toast.error('Please enter a routine name');
+        if (state.builderExercises.length === 0) return App.toast.error('Add at least one exercise');
+
+        const payload = {
+          name,
+          exercises: state.builderExercises.map((e, i) => ({
+            exercise_id: e.exercise_id,
+            sets: e.sets,
+            reps: e.reps,
+            rest_seconds: e.rest_seconds,
+            order_index: i
+          }))
+        };
+
+        try {
+          let res;
+          if (state.editingId) {
+            res = await App.api.put(`/api/routines/${state.editingId}`, payload);
+          } else {
+            res = await App.api.post('/api/routines', payload);
+          }
+          App.toast.success(res.message || 'Routine saved!');
+          closeBuilder();
+          await init();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function openDeleteModal(id) {
+        state.deletingId = id;
+        els.deleteModal.classList.remove('hidden');
+      }
+
+      async function confirmDelete() {
+        if (!state.deletingId) return;
+        try {
+          await App.api.delete(`/api/routines/${state.deletingId}`);
+          App.toast.success('Routine deleted');
+          await init();
+        } catch (err) {
+          console.error(err);
+        } finally {
+          els.deleteModal.classList.add('hidden');
+          state.deletingId = null;
+        }
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Event Listeners
+      document.getElementById('createRoutineBtn').addEventListener('click', () => openBuilder());
+      document.getElementById('closeModalBtn').addEventListener('click', closeBuilder);
+      document.getElementById('cancelModalBtn').addEventListener('click', closeBuilder);
+      document.getElementById('saveRoutineBtn').addEventListener('click', saveRoutine);
+      
+      document.getElementById('addExerciseBtn').addEventListener('click', () => {
+        const exId = parseInt(els.exerciseSelect.value);
+        if (!exId) return App.toast.warning('Select an exercise first');
+        
+        const exercise = state.exercises.find(e => e.id === exId);
+        state.builderExercises.push({
+          exercise_id: exercise.id,
+          name: exercise.name,
+          sets: 3,
+          reps: 10,
+          rest_seconds: 60
+        });
+        els.exerciseSelect.value = '';
+        renderBuilderExercises();
+      });
+
+      document.getElementById('cancelDeleteBtn').addEventListener('click', () => els.deleteModal.classList.add('hidden'));
+      document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+      
+      // Close modals on overlay click
+      document.getElementById('builderModalOverlay').addEventListener('click', closeBuilder);
+      document.getElementById('deleteModalOverlay').addEventListener('click', () => els.deleteModal.classList.add('hidden'));
+
+      // Logout
+      document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+
+      init();
+    });
+  </script>
+</body>
+</html>

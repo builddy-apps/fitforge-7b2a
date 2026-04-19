@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitForge - Exercise Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="app.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+    .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+    .stagger-1 { animation-delay: 0.05s; opacity: 0; }
+    .stagger-2 { animation-delay: 0.1s; opacity: 0; }
+    .stagger-3 { animation-delay: 0.15s; opacity: 0; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 pb-20 lg:pb-0">
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">FitForge</span>
+      </div>
+      
+      <nav class="hidden sm:flex items-center gap-1">
+        <a href="index.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Home</a>
+        <a href="exercises.html" class="px-3 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950 rounded-lg transition-colors">Exercises</a>
+        <a href="routines.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Build</a>
+        <a href="calendar.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Calendar</a>
+        <a href="records.html" class="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Profile</a>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button id="darkModeToggle" type="button" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-primary-500">
+          <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg id="moonIcon" class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <button id="logoutBtn" class="hidden sm:block px-3 py-2 text-sm font-medium text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-2xl font-bold">Exercise Library</h1>
+      <div class="relative flex-1 max-w-md">
+        <input type="text" id="searchInput" placeholder="Search exercises..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+    </div>
+
+    <div id="muscleFilters" class="flex flex-wrap gap-2 mb-6">
+      <button data-muscle="all" class="muscle-filter px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95">All</button>
+    </div>
+
+    <div id="loadingState" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+      <div class="h-48 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+    </div>
+
+    <div id="emptyState" class="hidden py-16 text-center">
+      <svg class="w-20 h-20 mx-auto text-slate-300 dark:text-slate-700 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-2">No exercises found</h3>
+      <p class="text-slate-500 dark:text-slate-400">Try adjusting your search or filter</p>
+    </div>
+
+    <div id="exercisesGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+  </main>
+
+  <div id="exerciseModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="modalOverlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
+        <div>
+          <h2 id="modalTitle" class="text-xl font-bold"></h2>
+          <div class="flex items-center gap-3 mt-2">
+            <span id="modalMuscle" class="px-2 py-1 rounded-md text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300"></span>
+            <span id="modalDifficulty" class="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"></span>
+          </div>
+        </div>
+        <button id="closeModal" type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <div id="modalEquipment" class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <span></span>
+        </div>
+        <h3 class="font-semibold mb-2">Instructions</h3>
+        <p id="modalDescription" class="text-slate-600 dark:text-slate-400 leading-relaxed"></p>
+        <div id="modalDemo" class="mt-6 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hidden">
+          <h4 class="font-medium mb-2 text-sm">Demo</h4>
+          <div class="aspect-video bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 text-sm">Video demo placeholder</div>
+        </div>
+      </div>
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+        <button id="addToRoutineBtn" type="button" class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          Add to Routine
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 left-0 right-0 sm:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-2">
+    <nav class="flex items-center justify-around">
+      <a href="index.html" class="flex flex-col items-center gap-1 p-2 text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-xs">Home</span>
+      </a>
+      <a href="exercises.html" class="flex flex-col items-center gap-1 p-2 text-primary-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        <span class="text-xs">Exercises</span>
+      </a>
+      <a href="routines.html" class="flex flex-col items-center gap-1 p-2 text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <span class="text-xs">Build</span>
+      </a>
+      <a href="calendar.html" class="flex flex-col items-center gap-1 p-2 text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span class="text-xs">Calendar</span>
+      </a>
+      <a href="records.html" class="flex flex-col items-center gap-1 p-2 text-slate-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <span class="text-xs">Profile</span>
+      </a>
+    </nav>
+  </div>
+
+  <script>
+    const Exercises = {
+      allExercises: [],
+      muscleGroups: [],
+      selectedMuscle: 'all',
+      searchQuery: '',
+      currentExercise: null,
+
+      async init() {
+        if (!Auth.isAuthenticated()) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        await this.loadMuscleGroups();
+        await this.loadExercises();
+        this.bindEvents();
+      },
+
+      async loadMuscleGroups() {
+        try {
+          const res = await App.api.get('/api/exercises/muscle-groups');
+          this.muscleGroups = res.data;
+          this.renderMuscleFilters();
+        } catch (err) {
+          App.toast.error('Failed to load muscle groups');
+        }
+      },
+
+      async loadExercises(muscle = 'all', search = '') {
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('exercisesGrid').classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+
+        try {
+          let url = '/api/exercises';
+          const params = new URLSearchParams();
+
+          if (muscle !== 'all') params.append('muscle_group', muscle);
+          if (search) {
+            url = '/api/exercises/search';
+            params.append('q', search);
+          }
+
+          if (params.toString()) url += '?' + params.toString();
+
+          const res = await App.api.get(url);
+          this.allExercises = res.data;
+          this.renderExercises();
+        } catch (err) {
+          App.toast.error('Failed to load exercises');
+        } finally {
+          document.getElementById('loadingState').classList.add('hidden');
+        }
+      },
+
+      renderMuscleFilters() {
+        const container = document.getElementById('muscleFilters');
+        container.innerHTML = `
+          <button data-muscle="all" class="muscle-filter px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95 ${this.selectedMuscle === 'all' ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'}">All</button>
+        `;
+
+        this.muscleGroups.forEach(group => {
+          const btn = document.createElement('button');
+          btn.dataset.muscle = group;
+          btn.className = `muscle-filter px-4 py-2 rounded-full text-sm font-medium transition-all active:scale-95 ${this.selectedMuscle === group ? 'bg-primary-600 text-white shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'}`;
+          btn.textContent = group;
+          container.appendChild(btn);
+        });
+      },
+
+      renderExercises() {
+        const grid = document.getElementById('exercisesGrid');
+        const empty = document.getElementById('emptyState');
+
+        if (this.allExercises.length === 0) {
+          empty.classList.remove('hidden');
+          grid.classList.add('hidden');
+          return;
+        }
+
+        empty.classList.add('hidden');
+        grid.classList.remove('hidden');
+        grid.innerHTML = '';
+
+        this.allExercises.forEach((ex, index) => {
+          const delayClass = index < 3 ? `stagger-${index + 1}` : '';
+          const card = document.createElement('div');
+          card.className = `bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer animate-fade-in ${delayClass} hover:scale-105 active:scale-95`;
+          card.innerHTML = `
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-2">${this.escapeHtml(ex.name)}</h3>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2 py-1 rounded-md text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300">${this.escapeHtml(ex.muscle_group)}</span>
+              ${ex.difficulty ? `<span class="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${this.escapeHtml(ex.difficulty)}</span>` : ''}
+            </div>
+            ${ex.equipment ? `<div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>${this.escapeHtml(ex.equipment)}</div>` : ''}
+          `;
+          card.addEventListener('click', () => this.openModal(ex));
+          grid.appendChild(card);
+        });
+      },
+
+      openModal(exercise) {
+        this.currentExercise = exercise;
+        document.getElementById('modalTitle').textContent = exercise.name;
+        document.getElementById('modalMuscle').textContent = exercise.muscle_group;
+        document.getElementById('modalDifficulty').textContent = exercise.difficulty || 'N/A';
+        document.getElementById('modalDescription').textContent = exercise.description || 'No description available.';
+        
+        const equipment = document.getElementById('modalEquipment');
+        if (exercise.equipment) {
+          equipment.classList.remove('hidden');
+          equipment.querySelector('span').textContent = exercise.equipment;
+        } else {
+          equipment.classList.add('hidden');
+        }
+
+        document.getElementById('exerciseModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      },
+
+      closeModal() {
+        document.getElementById('exerciseModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        this.currentExercise = null;
+      },
+
+      async addToRoutine() {
+        if (!this.currentExercise) return;
+        localStorage.setItem('pending_exercise', JSON.stringify(this.currentExercise));
+        App.toast.success('Exercise copied! Now add it to your routine.');
+        this.closeModal();
+        window.location.href = 'routines.html';
+      },
+
+      bindEvents() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', App.utils.debounce((e) => {
+          this.searchQuery = e.target.value.trim();
+          this.loadExercises(this.selectedMuscle, this.searchQuery);
+        }, 300));
+
+        document.getElementById('muscleFilters').addEventListener('click', (e) => {
+          const btn = e.target.closest('.muscle-filter');
+          if (!btn) return;
+          
+          this.selectedMuscle = btn.dataset.muscle;
+          this.renderMuscleFilters();
+          this.loadExercises(this.selectedMuscle, this.searchQuery);
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => this.closeModal());
+        document.getElementById('modalOverlay').addEventListener('click', () => this.closeModal());
+        document.getElementById('addToRoutineBtn').addEventListener('click', () => this.addToRoutine());
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') this.closeModal();
+        });
+
+        document.getElementById('darkModeToggle')?.addEventListener('click', () => App.darkMode.toggle());
+        document.getElementById('logoutBtn')?.addEventListener('click', () => Auth.logout());
+      },
+
+      escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => Exercises.init());
+  </script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitForge - Active Workout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="app.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes success-flash { 
+      0% { background-color: rgba(34, 197, 94, 0.5); } 
+      100% { background-color: transparent; } 
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+    .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+    .animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+    .animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
+    .animate-success { animation: success-flash 0.4s ease-out forwards; }
+    .pulse-ring::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 pb-20 lg:pb-0">
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">FitForge</span>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button id="cancelWorkoutBtn" class="px-3 py-2 text-sm font-medium text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+          End Workout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-6">
+    <!-- Loading State -->
+    <div id="loadingState" class="py-12 text-center">
+      <div class="inline-block w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mb-4"></div>
+      <p class="text-slate-500 dark:text-slate-400">Loading workout...</p>
+    </div>
+
+    <!-- No Active Workout State -->
+    <div id="emptyState" class="hidden py-16 text-center animate-fade-in">
+      <svg class="w-20 h-20 mx-auto text-slate-300 dark:text-slate-700 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <h2 class="text-xl font-bold mb-2">No Active Workout</h2>
+      <p class="text-slate-500 dark:text-slate-400 mb-6">Select a routine to start training.</p>
+      <a href="routines.html" class="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg shadow-md transition-all active:scale-95">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        Go to Routines
+      </a>
+    </div>
+
+    <!-- Workout View -->
+    <div id="workoutView" class="hidden space-y-6 animate-fade-in">
+      <!-- Progress Bar -->
+      <div class="mb-6">
+        <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-2">
+          <span id="exerciseProgress">Exercise 1 of 5</span>
+          <span id="workoutTime">00:00</span>
+        </div>
+        <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-primary-600 transition-all duration-500" style="width: 20%"></div>
+        </div>
+      </div>
+
+      <!-- Current Exercise Card -->
+      <section id="exerciseCard" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden transition-all">
+        <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4">
+          <span id="exerciseMuscle" class="inline-block px-2 py-1 bg-white/20 rounded text-xs font-medium uppercase tracking-wide text-white mb-1">Chest</span>
+          <h2 id="exerciseName" class="text-2xl font-bold text-white">Bench Press</h2>
+        </div>
+        
+        <div class="p-6">
+          <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Sets</p>
+              <p id="targetSets" class="text-xl font-bold text-slate-900 dark:text-white">3</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Reps</p>
+              <p id="targetReps" class="text-xl font-bold text-slate-900 dark:text-white">10</p>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Rest</p>
+              <p id="targetRest" class="text-xl font-bold text-slate-900 dark:text-white">60s</p>
+            </div>
+          </div>
+
+          <div id="setsContainer" class="space-y-3">
+            <!-- Sets rendered by JS -->
+          </div>
+          
+          <div id="exerciseCompleteAction" class="hidden mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
+            <button id="nextExerciseBtn" class="w-full sm:w-auto px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 mx-auto">
+              Next Exercise
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Workout Summary (Final Step) -->
+      <section id="summaryCard" class="hidden bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden animate-scale-in">
+        <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-8 text-center">
+          <svg class="w-16 h-16 text-white mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h2 class="text-2xl font-bold text-white">Workout Complete!</h2>
+        </div>
+        <div class="p-6 grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Total Sets</p>
+            <p id="summarySets" class="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Total Volume</p>
+            <p id="summaryVolume" class="text-2xl font-bold text-slate-900 dark:text-white">0 kg</p>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Duration</p>
+            <p id="summaryDuration" class="text-2xl font-bold text-slate-900 dark:text-white">0:00</p>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">PRs Hit</p>
+            <p id="summaryPRs" class="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+          </div>
+        </div>
+        <div class="p-6 pt-0">
+          <button id="finishWorkoutBtn" class="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-opacity">
+            Back to Home
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Rest Timer Overlay -->
+    <div id="restOverlay" class="hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center">
+      <div class="text-center animate-scale-in">
+        <div class="relative inline-flex items-center justify-center w-48 h-48 mb-6">
+          <div class="absolute inset-0 border-8 border-slate-700 rounded-full"></div>
+          <div id="timerRing" class="absolute inset-0 border-8 border-primary-500 rounded-full border-t-transparent transition-transform duration-1000" style="transform: rotate(-90deg)"></div>
+          <span id="timerDisplay" class="text-6xl font-bold text-white tabular-nums">60</span>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2">Rest Time</h3>
+        <p class="text-slate-400 mb-8">Get ready for the next set</p>
+        <button id="skipRestBtn" class="px-8 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-slate-100 transition-colors active:scale-95">
+          Skip Rest
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      Auth.checkAuth();
+
+      // State
+      let activeWorkout = null;
+      let currentRoutine = null;
+      let currentExerciseIndex = 0;
+      let completedSets = {};
+      let timerInterval = null;
+      let workoutStartTime = null;
+      let timeInterval = null;
+
+      // DOM Elements
+      const loadingState = document.getElementById('loadingState');
+      const emptyState = document.getElementById('emptyState');
+      const workoutView = document.getElementById('workoutView');
+      const exerciseCard = document.getElementById('exerciseCard');
+      const setsContainer = document.getElementById('setsContainer');
+      const progressBar = document.getElementById('progressBar');
+      const restOverlay = document.getElementById('restOverlay');
+      const timerDisplay = document.getElementById('timerDisplay');
+      const timerRing = document.getElementById('timerRing');
+      const summaryCard = document.getElementById('summaryCard');
+
+      // Initialize
+      init();
+
+      async function init() {
+        currentRoutine = JSON.parse(localStorage.getItem('activeRoutine'));
+        await loadActiveWorkout();
+        startWorkoutTimer();
+      }
+
+      async function loadActiveWorkout() {
+        try {
+          const res = await App.api.get('/api/workouts/active');
+          
+          if (!res.data || res.data.completed_at) {
+            // No active workout or workout was completed externally
+            showEmptyState();
+            return;
+          }
+
+          activeWorkout = res.data;
+          
+          // If we have a routine in local storage, verify it matches or use it
+          // For this implementation, we trust the local storage routine for the "Plan"
+          // and the API for "Progress"
+          
+          if (!currentRoutine || currentRoutine.exercises.length === 0) {
+            // Fallback if somehow routine is missing, try to reconstruct from sets (imperfect but functional)
+            // Or just redirect
+            App.toast.warning('Workout data corrupted. Please restart.');
+            setTimeout(() => window.location.href = 'routines.html', 2000);
+            return;
+          }
+
+          // Map completed sets
+          activeWorkout.sets.forEach(set => {
+            const key = `${set.exercise_id}-${set.set_number}`;
+            completedSets[key] = set;
+          });
+
+          // Find current exercise index
+          let currentIndex = 0;
+          for (let i = 0; i < currentRoutine.exercises.length; i++) {
+            const ex = currentRoutine.exercises[i];
+            const allSetsDone = Array.from({ length: ex.sets }, (_, idx) => idx + 1)
+              .every(setNum => completedSets[`${ex.id}-${setNum}`]);
+            
+            if (!allSetsDone) {
+              currentIndex = i;
+              break;
+            }
+            currentIndex = i + 1;
+          }
+
+          if (currentIndex >= currentRoutine.exercises.length) {
+            showSummary();
+            return;
+          }
+
+          currentExerciseIndex = currentIndex;
+          renderWorkout();
+          showWorkoutView();
+
+        } catch (err) {
+          console.error(err);
+          App.toast.error('Failed to load workout');
+          showEmptyState();
+        }
+      }
+
+      function renderWorkout() {
+        const totalExercises = currentRoutine.exercises.length;
+        const progress = ((currentExerciseIndex) / totalExercises) * 100;
+        
+        document.getElementById('exerciseProgress').textContent = `Exercise ${currentExerciseIndex + 1} of ${totalExercises}`;
+        progressBar.style.width = `${progress}%`;
+
+        renderCurrentExercise();
+      }
+
+      function renderCurrentExercise() {
+        const exercise = currentRoutine.exercises[currentExerciseIndex];
+        
+        document.getElementById('exerciseMuscle').textContent = exercise.muscle_group || 'General';
+        document.getElementById('exerciseName').textContent = exercise.name;
+        document.getElementById('targetSets').textContent = exercise.sets;
+        document.getElementById('targetReps').textContent = exercise.reps || '-';
+        document.getElementById('targetRest').textContent = App.utils.formatDuration(exercise.rest_seconds || 60);
+
+        setsContainer.innerHTML = '';
+
+        for (let i = 1; i <= exercise.sets; i++) {
+          const key = `${exercise.id}-${i}`;
+          const completedData = completedSets[key];
+          const isCompleted = !!completedData;
+
+          const setRow = document.createElement('div');
+          setRow.className = `flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${isCompleted ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
+          setRow.style.animationDelay = `${(i - 1) * 0.1}s`;
+          setRow.classList.add('animate-fade-in');
+
+          if (isCompleted) {
+            setRow.innerHTML = `
+              <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-green-700 dark:text-green-400">Set ${i} Complete</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">${completedData.weight || 0}kg × ${completedData.reps || 0} reps</p>
+              </div>
+            `;
+          } else {
+            setRow.innerHTML = `
+              <span class="text-sm font-bold text-slate-400 w-8">${i}</span>
+              <input type="number" id="weight-${i}" placeholder="kg" class="w-20 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 text-center font-bold" inputmode="decimal">
+              <span class="text-slate-400">×</span>
+              <input type="number" id="reps-${i}" placeholder="reps" class="w-20 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 text-center font-bold" inputmode="numeric">
+              <button onclick="completeSet(${exercise.id}, ${i})" class="ml-auto px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-primary-500 dark:hover:bg-primary-600 hover:text-white text-slate-700 dark:text-slate-300 font-bold rounded-lg transition-all active:scale-95 min-w-[80px]">
+                Done
+              </button>
+            `;
+          }
+          setsContainer.appendChild(setRow);
+        }
+
+        // Check if all sets in current exercise are done
+        const allSetsDone = Array.from({ length: exercise.sets }, (_, idx) => idx + 1)
+          .every(setNum => completedSets[`${exercise.id}-${setNum}`]);
+        
+        const completeAction = document.getElementById('exerciseCompleteAction');
+        if (allSetsDone) {
+          completeAction.classList.remove('hidden');
+        } else {
+          completeAction.classList.add('hidden');
+        }
+      }
+
+      window.completeSet = async (exerciseId, setNum) => {
+        const weightInput = document.getElementById(`weight-${setNum}`);
+        const repsInput = document.getElementById(`reps-${setNum}`);
+        
+        const weight = parseFloat(weightInput.value) || 0;
+        const reps = parseInt(repsInput.value) || 0;
+
+        if (weight < 0 || reps <= 0) {
+          App.toast.warning('Please enter valid weight and reps');
+          return;
+        }
+
+        try {
+          const res = await App.api.post(`/api/workouts/${activeWorkout.id}/sets`, {
+            exercise_id: exerciseId,
+            set_number: setNum,
+            weight,
+            reps
+          });
+
+          if (res.success) {
+            // Update local state
+            completedSets[`${exerciseId}-${setNum}`] = res.data;
+            
+            // Visual feedback
+            document.body.classList.add('animate-success');
+            setTimeout(() => document.body.classList.remove('animate-success'), 400);
+            
+            // Re-render
+            renderCurrentExercise();
+            
+            // Check if exercise is now complete
+            const exercise = currentRoutine.exercises[currentExerciseIndex];
+            const allSetsDone = Array.from({ length: exercise.sets }, (_, idx) => idx + 1)
+              .every(sn => completedSets[`${exercise.id}-${sn}`]);
+
+            if (allSetsDone) {
+              // Start rest timer before showing next button
+              startRestTimer(exercise.rest_seconds || 60);
+            } else {
+              // Focus next set input
+              const nextSetInput = document.querySelector(`button[onclick*="${setNum + 1}"]`)?.previousElementSibling?.previousElementSibling;
+              if (nextSetInput) nextSetInput.focus();
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      function startRestTimer(seconds) {
+        restOverlay.classList.remove('hidden');
+        let remaining = seconds;
+        updateTimerUI(remaining, seconds);
+
+        timerInterval = setInterval(() => {
+          remaining--;
+          updateTimerUI(remaining, seconds);
+
+          if (remaining <= 0) {
+            clearInterval(timerInterval);
+            skipRest();
+          }
+        }, 1000);
+      }
+
+      function updateTimerUI(remaining, total) {
+        timerDisplay.textContent = remaining;
+        const percentage = (remaining / total) * 360;
+        timerRing.style.transform = `rotate(-90deg) rotate(${percentage}deg)`;
+      }
+
+      function skipRest() {
+        clearInterval(timerInterval);
+        restOverlay.classList.add('hidden');
+      }
+
+      document.getElementById('skipRestBtn').addEventListener('click', () => {
+        skipRest();
+        // If exercise is done, ensure next button is visible
+        const exercise = currentRoutine.exercises[currentExerciseIndex];
+        const allSetsDone = Array.from({ length: exercise.sets }, (_, idx) => idx + 1)
+          .every(sn => completedSets[`${exercise.id}-${sn}`]);
+        
+        if (allSetsDone) {
+           document.getElementById('exerciseCompleteAction').classList.remove('hidden');
+        }
+      });
+
+      document.getElementById('nextExerciseBtn').addEventListener('click', async () => {
+        currentExerciseIndex++;
+        
+        if (currentExerciseIndex >= currentRoutine.exercises.length) {
+          await finishWorkout();
+        } else {
+          renderWorkout();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+
+      async function finishWorkout() {
+        try {
+          clearInterval(timeInterval);
+          const res = await App.api.put(`/api/workouts/${activeWorkout.id}/complete`);
+          if (res.success) {
+            activeWorkout.completed_at = res.data.completed_at;
+            localStorage.removeItem('activeRoutine');
+            showSummary();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function showSummary() {
+        exerciseCard.classList.add('hidden');
+        summaryCard.classList.remove('hidden');
+        document.getElementById('exerciseProgress').textContent = 'Workout Complete';
+        progressBar.style.width = '100%';
+        progressBar.classList.remove('bg-primary-600');
+        progressBar.classList.add('bg-green-500');
+
+        // Calculate stats
+        const totalSets = activeWorkout.sets?.length || 0;
+        const totalVolume = activeWorkout.sets?.reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0)), 0) || 0;
+        const duration = workoutStartTime ? Math.floor((Date.now() - workoutStartTime) / 1000) : 0;
+
+        document.getElementById('summarySets').textContent = totalSets;
+        document.getElementById('summaryVolume').textContent = `${totalVolume.toLocaleString()} kg`;
+        document.getElementById('summaryDuration').textContent = App.utils.formatDuration(duration);
+        // PRs logic would require backend data or client-side calculation, setting to 0 for now
+        document.getElementById('summaryPRs').textContent = '0';
+      }
+
+      document.getElementById('finishWorkoutBtn').addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+
+      document.getElementById('cancelWorkoutBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to end this workout? Progress will be saved.')) {
+          finishWorkout().then(() => {
+             window.location.href = 'index.html';
+          });
+        }
+      });
+
+      function showEmptyState() {
+        loadingState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      }
+
+      function showWorkoutView() {
+        loadingState.classList.add('hidden');
+        emptyState.classList.add('hidden');
+        workoutView.classList.remove('hidden');
+      }
+
+      function startWorkoutTimer() {
+        workoutStartTime = Date.now();
+        const timeDisplay = document.getElementById('workoutTime');
+        
+        timeInterval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - workoutStartTime) / 1000);
+          const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+          const secs = (elapsed % 60).toString().padStart(2, '0');
+          timeDisplay.textContent = `${mins}:${secs}`;
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>
